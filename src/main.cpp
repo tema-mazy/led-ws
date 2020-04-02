@@ -583,12 +583,22 @@ void handleSave() {
 }
 
 void resetSettings() {
+      Serial.println(F("Reset settings..."));
+      server.sendHeader("Location", String("/"), true);
+      server.send ( 302, "text/plain", "/");
+      // Empty content inhibits Content-length header so we have to close the socket ourselves.
+      server.client().stop(); // Stop is needed because we sent no content length      
+
       wifiManager.resetSettings();
+      SPIFFS.format();
       EEPROM.write(98, 0);
       EEPROM.commit();
       fullBlack();
-      delay(200);
+      Serial.println(F("Reboot..."));
+
+      delay(1000);
       ESP.restart();
+
 }
 
 volatile unsigned long buttlastSent = 0;
@@ -708,6 +718,7 @@ void setup() {
   if (EEPROM.read(98) != 27) {   // first run
     EEPROM.write(98, 27);
     storeSettings();
+    wifiManager.resetSettings();
   } else {
     readSettings();
     nextPattern();
