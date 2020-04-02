@@ -649,7 +649,7 @@ void configModeCallback (WiFiManager *myWiFiManager) {
 }
 
 void _iototasetup() {
-  ArduinoOTA.setPassword("Wimt3odpodBy");
+  ArduinoOTA.setPassword(OTAKEY);
   ArduinoOTA.onStart([]() { fullBlack(); blinker.attach(0.3, blink); });
   ArduinoOTA.onEnd([]() {
     digitalWrite(D0, LOW);
