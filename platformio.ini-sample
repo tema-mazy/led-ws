@@ -20,18 +20,18 @@ lib_deps = FastLED
 
 
 [env:local]
-build_flags =  -DBE_MINIMAL -D PIO_FRAMEWORK_ARDUINO_LWIP2_LOW_MEMORY -DWEMOSD1MINI -DNUM_LEDS=100 -DOTAKEY=changeme
+build_flags =  -DBE_MINIMAL -D PIO_FRAMEWORK_ARDUINO_LWIP2_LOW_MEMORY -DWEMOSD1MINI -DNUM_LEDS=100 '-DOTAKEY=changeme'
 upload_protocol = esptool
 
 [env:prodWS8211]
-build_flags =  -DBE_MINIMAL -D PIO_FRAMEWORK_ARDUINO_LWIP2_LOW_MEMORY -DWEMOSD1MINI -DNUM_LEDS=200 -DOTAKEY=changeme
+build_flags =  -DBE_MINIMAL -D PIO_FRAMEWORK_ARDUINO_LWIP2_LOW_MEMORY -DWEMOSD1MINI -DNUM_LEDS=200 '-DOTAKEY=changeme'
 upload_protocol = espota
 upload_flags =  --auth=changeme
 upload_port  = 192.168.1.14
 
 
 ;[env:prodWS8212]
-;build_flags =  -DBE_MINIMAL -D PIO_FRAMEWORK_ARDUINO_LWIP2_LOW_MEMORY -DNODEMCU -DLEDSTRIP -DOTAKEY=changeme
+;build_flags =  -DBE_MINIMAL -D PIO_FRAMEWORK_ARDUINO_LWIP2_LOW_MEMORY -DNODEMCU -DLEDSTRIP '-DOTAKEY=changeme'
 ;upload_protocol = espota
 ;upload_flags =  --auth=changeme
 ;upload_port  = 192.168.1.17
