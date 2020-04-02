@@ -22,7 +22,7 @@ body{margin:0;padding:104px 0 78px;background:#f4f4ff;font-family:Arial,Helvetic
 	<div class="navbar">
 	  <div class="container">
 		<div class="brand">
-		  <div class="title">X-Mas Lights:</div>
+		  <div class="title">X-Mas Lights</div>
 		  <div class="active">{mode}</div>
 		</div>
 		<div class="status">
@@ -82,13 +82,10 @@ body{margin:0;padding:104px 0 78px;background:#f4f4ff;font-family:Arial,Helvetic
 			</ul>    
 		  </div>
 		</div>
-		
-	  </div>
-	</div>
-	<div class="footer">
-	  <div class="controls">
-		<button class="btn" onclick="document.getElementById('saveForm').submit();">Зберегти</button>
-		<button class="btn" onclick="if (confirm('Скинути всі Налаштування?')) { document.location='/reset?r={millis}'; }; ">RESET</button>
+		<div class="controls">
+			<button class="btn" onclick="document.getElementById('saveForm').submit();">Зберегти</button>
+			<button class="btn" onclick="if (confirm('Скинути всі Налаштування?')) { document.location='/reset?r={millis}'; }; ">RESET</button>
+		</div>
 	  </div>
 	</div>
 
