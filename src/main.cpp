@@ -839,10 +839,7 @@ void loop() {
         EVERY_N_MILLISECONDS( 20 ) { brightnessRoutine(); }
     }
     
-    if (setNext) {
-	setNext = false;
-	nextPattern();
-    }
+    if (setNext) {	setNext = false;	nextPattern();  }
 
     EVERY_N_SECONDS_I( timingObj, 5 ) { timingObj.setPeriod(globalDelay); nextPattern(); } // change patterns periodically
 
