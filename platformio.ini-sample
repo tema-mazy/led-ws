@@ -10,28 +10,64 @@
 
 [platformio]
 workspace_dir=/tmp/pio-workspaces/$PROJECT_HASH
+default_envs=local
 
 [env]
 platform = espressif8266
+; set frequency to 160MHz
+board_build.f_cpu = 160000000L
 board = nodemcuv2
 framework = arduino
-lib_deps = FastLED
+
+build_flags = 
+       -D BE_MINIMAL 
+       -D PIO_FRAMEWORK_ARDUINO_LWIP2_LOW_MEMORY  
+       -D PIO_FRAMEWORK_ARDUINO_ESPRESSIF_SDK22x_191122 
+       -D BEARSSL_SSL_BASIC   
+       '-DOTAKEY="Wimt3odpodBy"'
+
+lib_deps = fastled/FastLED
+           ruleechen/HomeKit-ESP8266
            WifiManager
 
 
 [env:local]
-build_flags =  -DBE_MINIMAL -D PIO_FRAMEWORK_ARDUINO_LWIP2_LOW_MEMORY -DWEMOSD1MINI -DNUM_LEDS=100 '-DOTAKEY=changeme'
+build_flags = ${env.build_flags} 
+        -D NODEMCU -D NUM_LEDS=100
 upload_protocol = esptool
 
-[env:prodWS8211]
-build_flags =  -DBE_MINIMAL -D PIO_FRAMEWORK_ARDUINO_LWIP2_LOW_MEMORY -DWEMOSD1MINI -DNUM_LEDS=200 '-DOTAKEY=changeme'
+[env:leds]
+build_flags =  ${env.build_flags} 
+        -D WEMOSD1MINI 
+        -D NUM_LEDS=300
+upload_protocol = esptool
+
+[env:ledsota100]
+build_flags =  ${env.build_flags}
+        -D WEMOSD1MINI 
+        -D NUM_LEDS=100
 upload_protocol = espota
-upload_flags =  --auth=changeme
-upload_port  = 192.168.1.14
+upload_flags =  --auth=ChangeMeNow
+
+[env:ledsota300]
+build_flags =  ${env.build_flags}
+        -D NODEMCU
+        -D NUM_LEDS=300
+upload_protocol = espota
+upload_flags =  --auth=ChangeMeNow
 
 
-;[env:prodWS8212]
-;build_flags =  -DBE_MINIMAL -D PIO_FRAMEWORK_ARDUINO_LWIP2_LOW_MEMORY -DNODEMCU -DLEDSTRIP '-DOTAKEY=changeme'
-;upload_protocol = espota
-;upload_flags =  --auth=changeme
-;upload_port  = 192.168.1.17
+[env:strip]
+build_flags =  ${env.build_flags}
+       -D NODEMCU 
+       -D LEDSTRIP  
+       -D NUM_LEDS=300
+upload_protocol = esptool
+
+[env:stripota]
+build_flags =  ${env.build_flags}
+       -D NODEMCU 
+       -D LEDSTRIP  
+       -D NUM_LEDS=300
+upload_protocol = espota
+upload_flags =  --auth=ChangeMeNow
