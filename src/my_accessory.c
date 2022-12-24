@@ -36,13 +36,13 @@ homekit_accessory_t *accessories[] = {
             NULL
         }),
 
-        
+
         HOMEKIT_SERVICE(SWITCH, .characteristics=(homekit_characteristic_t*[]){
             HOMEKIT_CHARACTERISTIC(NAME, "Next Effect"),
             &cha_effect_on,
             NULL
         }),
-        
+
 
 
         NULL

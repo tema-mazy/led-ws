@@ -6,7 +6,10 @@
 #include <html.h>
 #include "gradient_palettes.h"
 #include <WiFiManager.h>
+
+#ifdef HOMEKIT
 #include <arduino_homekit_server.h>
+#endif
 
 #ifndef NUM_LEDS
 #define NUM_LEDS 50
@@ -40,12 +43,12 @@ FASTLED_USING_NAMESPACE
 #ifdef LEDSTRIP
 #define LED_TYPE    WS2812B
 #define COLOR_ORDER GRB
-#define FRAMES_PER_SECOND  50
+#define FRAMES_PER_SECOND  60
 
 #else
 #define LED_TYPE    WS2811
 #define COLOR_ORDER RGB
-#define FRAMES_PER_SECOND  50
+#define FRAMES_PER_SECOND  60
 #endif
 CRGB leds[NUM_LEDS];
 
@@ -58,7 +61,7 @@ volatile unsigned int cycleHue = 1;
 volatile unsigned int hues = 5;
 volatile unsigned int palc = 1;
 volatile unsigned int pals = 20;
-volatile unsigned int svv = 5;
+volatile unsigned int svv = 30;
 
 extern const TProgmemRGBGradientPalettePtr gGradientPalettes[]; // These are for the fixed palettes in gradient_palettes.h
 extern const uint8_t gGradientPaletteCount;                     // Total number of fixed palettes to display.
@@ -81,13 +84,14 @@ WiFiEventHandler wifiDisconnectHandler;
 WiFiManager wifiManager;
 
 
+#ifdef HOMEKIT
 // access your HomeKit characteristics defined in my_accessory.c
-
 extern "C" homekit_server_config_t accessory_config;
 extern "C" homekit_characteristic_t cha_on;
 extern "C" homekit_characteristic_t cha_name;
 extern "C" homekit_characteristic_t cha_bright;
 extern "C" homekit_characteristic_t cha_effect_on;
+#endif
 
 /* effects */
 
@@ -161,8 +165,8 @@ void bpm() {
 
 void milis() {
 	long ms = millis() / 500;
-	leds[ms % NUM_LEDS] = (ms % 2 == 0) ? CRGB::Red : CRGB::Blue;
-	leds[NUM_LEDS - ms % NUM_LEDS] = (ms % 2 == 0) ? CRGB::Blue : CRGB::Red;
+	leds[ms % NUM_LEDS] = (ms % 2 == 0) ? CRGB::Yellow : CRGB::Blue;
+	leds[NUM_LEDS - ms % NUM_LEDS] = (ms % 2 == 0) ? CRGB::Blue : CRGB::Yellow;
 	leds[(millis() / 50) % NUM_LEDS] = CHSV(gHue + random8(-10, 10), 200,
 			globalBrightness);
 	fadeToBlackBy(leds, NUM_LEDS, 10);            // 8 bit, 1 = slow, 255 = fast
@@ -380,7 +384,26 @@ void snow() {
 
 }
 
-// *********** "дыхание" яркостью ***********
+byte meteorSize = 10;
+byte meteorTrailDecay = 64;
+int SpeedDelay = 30;
+int mp = 0;
+
+void meteorRain() {
+  fadeToBlackBy(leds, NUM_LEDS, meteorTrailDecay);
+      // draw meteor
+    for(int j = 0; j < meteorSize; j++) {
+      if( ( mp-j <NUM_LEDS) && (mp-j>=0) ) {
+        leds[mp-j] = CRGB::White;
+      }
+  }
+  mp++;
+  if (mp >= NUM_LEDS) mp=0;
+}
+
+
+
+
 boolean brightnessDirection;
 void brightnessRoutine() {
 	if (brightnessDirection) {
@@ -400,11 +423,11 @@ void brightnessRoutine() {
 
 // List of patterns to cycle through.  Each is defined as a separate function below.
 typedef void (*SimplePatternList[])();
-SimplePatternList gPatterns = { confetti, sinelon, rainbow, glitter, drops, bpm,
+SimplePatternList gPatterns = { meteorRain, confetti, sinelon, rainbow, glitter, drops, bpm,
 		Fire2012WithPalette, milis, colors, candles, blendwave, noise8_pal,
 		matrix_pal, serendipitous_pal, snow };
-int effectsEnabled[] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
-const char *effectsName[] = { "Конфеті", "Повзучка", "Веселка", "Спалахи",
+int effectsEnabled[] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+const char *effectsName[] = { "Метеор","Конфеті", "Повзучка", "Веселка", "Спалахи",
 		"Крапельки", "Пульс", "Вогонь", "Секунди", "Кольори", "Свічки", "Хвилі",
 		"Шум", "Матриця", "Serendipity", "Сніг" };
 
@@ -481,10 +504,13 @@ void storeSettings() {
 		Serial.println(e);
 	}
 	EEPROM.commit();
+#ifdef HOMEKIT
+
 	cha_bright.value.int_value = map(globalBrightness, 1, 200, 0, 100);
 	homekit_characteristic_notify(&cha_bright, cha_bright.value);
 	cha_on.value.bool_value = state == 1;
 	homekit_characteristic_notify(&cha_on, cha_on.value);
+#endif
 
 }
 
@@ -510,14 +536,15 @@ void readSettings() {
 		effectsEnabled[0] = 1;
 	FastLED.setBrightness(globalBrightness);
 
+#ifdef HOMEKIT
 	cha_bright.value.int_value = map(globalBrightness, 1, 200, 0, 100);
 	homekit_characteristic_notify(&cha_bright, cha_bright.value);
 	cha_on.value.bool_value = state == 1;
 	homekit_characteristic_notify(&cha_on, cha_on.value);
-
+#endif
 }
 
-//Called when the switch value is changed by iOS Home APP
+#ifdef HOMEKIT
 void cha_effect_on_setter(const homekit_value_t value) {
 	LOG_D("HK NEXT");
 	nextPattern();
@@ -526,7 +553,7 @@ void cha_effect_on_setter(const homekit_value_t value) {
 	homekit_characteristic_notify(&cha_effect_on, cha_effect_on.value);
 
 }
-
+#endif
 /******************************/
 
 const char _ETPL[] PROGMEM
@@ -603,9 +630,10 @@ void updateVars() {
 
 	globalBrightness = server.arg("brt").toInt();
 	FastLED.setBrightness(globalBrightness);
+#ifdef HOMEKIT
 	cha_bright.value.int_value = map(globalBrightness, 1, 200, 0, 100);
 	homekit_characteristic_notify(&cha_bright, cha_bright.value);
-
+#endif
 	globalDelay = server.arg("del").toInt();
 
 	brightnessBreath = server.arg("brbr").toInt();
@@ -639,25 +667,28 @@ void changeState(int s) {
 	state = s;
 	if (state == 1) {
 		Serial.println(F("STATE: 1"));
-		cha_on.value.bool_value = true;
 	} else {
-		cha_on.value.bool_value = false;
 		fullBlack();
 		Serial.println(F("STATE: 0"));
 	}
+#ifdef HOMEKIT
+	cha_on.value.bool_value = state == 1;
+
 	cha_bright.value.int_value = map(globalBrightness, 1, 200, 0, 100);
 	homekit_characteristic_notify(&cha_bright, cha_bright.value);
 	homekit_characteristic_notify(&cha_on, cha_on.value);
-
+#endif
 	storeSettings();
 
 }
-
+#ifdef HOMEKIT
 void set_on(const homekit_value_t v) {
 	bool on = v.bool_value;
 	cha_on.value.bool_value = on; //sync the value
 	changeState(on ? 1 : 0);
 }
+#endif
+
 void handleState() {
 	state = (server.arg("s") == "on");
 	changeState(state);
@@ -665,7 +696,7 @@ void handleState() {
 	server.send(302, "text/plain", "/");
 	server.client().stop(); // Stop is needed because we sent no content length
 }
-
+#ifdef HOMEKIT
 void set_bright(const homekit_value_t v) {
 	Serial.println("set_bright");
 	int bright = v.int_value;
@@ -680,7 +711,7 @@ void set_bright(const homekit_value_t v) {
 
 	storeSettings();
 }
-
+#endif
 void handleSave() {
 	// update vars
 	updateVars();
@@ -702,9 +733,10 @@ void resetSettings() {
 	server.send(302, "text/plain", "/");
 	// Empty content inhibits Content-length header so we have to close the socket ourselves.
 	server.client().stop(); // Stop is needed because we sent no content length
+#ifdef HOMEKIT
 	homekit_storage_reset();
+#endif
 	wifiManager.resetSettings();
-	SPIFFS.format();
 	EEPROM.write(EEPROM_OFFSET + 98, 0);
 	EEPROM.commit();
 	fullBlack();
@@ -844,9 +876,12 @@ void setup() {
 	EEPROM.begin(4096);
 	delay(250);
 	if (EEPROM.read(EEPROM_OFFSET + 98) != 27) {   // first run
+		Serial.println(F("# first run detected "));
 		EEPROM.write(EEPROM_OFFSET + 98, 27);
 		storeSettings();
+#ifdef HOMEKIT
 		homekit_storage_reset();
+#endif
 		wifiManager.resetSettings();
 	} else {
 		readSettings();
@@ -854,6 +889,7 @@ void setup() {
 	}
 
 	Serial.println(F("# Init LED "));
+	pinMode(DATA_PIN, OUTPUT);
 	FastLED.addLeds<LED_TYPE, DATA_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection(
 			TypicalLEDStrip);
 
@@ -925,6 +961,7 @@ void setup() {
 
 	gCurrentPaletteNumber = random8(0, gGradientPaletteCount);
 	gCurrentPalette = gGradientPalettes[gCurrentPaletteNumber];
+#ifdef HOMEKIT
 
 	Serial.println(F(" Homekit setup"));
 	uint8_t mac[WL_MAC_ADDR_LENGTH];
@@ -945,7 +982,7 @@ void setup() {
 	homekit_characteristic_notify(&cha_bright, cha_bright.value);
 	cha_on.value.bool_value = state == 1;
 	homekit_characteristic_notify(&cha_on, cha_on.value);
-
+#endif
 	initLeds(CRGB::Green);
 
 	Serial.println(F(" done "));
@@ -954,7 +991,9 @@ void setup() {
 
 void loop() {
 	ArduinoOTA.handle();
+#ifdef HOMEKIT
 	arduino_homekit_loop();
+#endif
 	server.handleClient();
 
 	if (setState) {
@@ -962,8 +1001,9 @@ void loop() {
 		changeState(1 - state);
 	}
 
-	EVERY_N_MILLISECONDS(1000/FRAMES_PER_SECOND) {
-		if (state == 1) {
+	if (state == 1) {
+		EVERY_N_MILLISECONDS(1000/FRAMES_PER_SECOND) {
+
 
 			gPatterns[cPattern]();
 			if (setNext) {
@@ -1011,11 +1051,16 @@ void loop() {
 			FastLED.show();
 
 		}
+	} else {
+		fullBlack();
+
 	}
-	EVERY_N_MILLISECONDS(30 * 1000)
+#ifdef HOMEKIT
+	EVERY_N_MILLISECONDS(15 * 1000)
 	{
 		homekit_characteristic_notify(&cha_bright, cha_bright.value);
 		homekit_characteristic_notify(&cha_on, cha_on.value);
 	}
-
+#endif
 }
+
